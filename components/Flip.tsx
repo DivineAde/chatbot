@@ -214,7 +214,7 @@ export default function ChatBot() {
               </div>
             </div>
             
-            {/* Desktop Controls */}
+           
             <div className="hidden lg:flex items-center space-x-3">
               <button
                 onClick={openSettings}
@@ -232,7 +232,7 @@ export default function ChatBot() {
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
+            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 backdrop-blur-sm"
@@ -241,7 +241,7 @@ export default function ChatBot() {
             </button>
           </div>
 
-          {/* Mobile Menu */}
+
           {isMobileMenuOpen && (
             <div className="lg:hidden mt-4 p-4 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20">
               <div className="flex flex-col space-y-3">
@@ -270,7 +270,7 @@ export default function ChatBot() {
           )}
         </div>
 
-        {/* Settings Modal */}
+        
          {showSettings && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20">
@@ -344,7 +344,7 @@ export default function ChatBot() {
           </div>
         )}
 
-        {/* Chat Messages */}
+        
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {chatHistory.length === 0 && !response && (
             <div className="text-center py-12">
@@ -417,43 +417,26 @@ export default function ChatBot() {
             </div>
           ))}
 
-          {/* Current response (if loading or just sent) */}
-          {(isLoading || response) && (
-            <div className="flex justify-start mb-4">
-              <div className="flex items-start space-x-3 max-w-[80%]">
-                <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm">
-                  {isLoading ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
-                      <span className="text-sm text-gray-500">AI is thinking...</span>
-                    </div>
-                  ) : (
-                    <div 
-                      className="prose prose-sm max-w-none
-                        [&>h3]:text-gray-700 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-0
-                        [&>strong]:text-emerald-600
-                        [&>ul]:pl-5 [&>ul]:list-disc [&>ul]:my-2
-                        [&>li]:mb-1
-                        [&>ol]:pl-5 [&>ol]:list-decimal [&>ol]:my-2
-                        [&>p]:mb-2 [&>p]:last:mb-0
-                        [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-gray-600
-                        [&>code]:bg-gray-100 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>code]:text-sm [&>code]:font-mono
-                        [&>pre]:bg-gray-900 [&>pre]:text-gray-100 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>pre]:my-3
-                        [&>pre>code]:bg-transparent [&>pre>code]:p-0"
-                      dangerouslySetInnerHTML={{ __html: response }}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          
+         {isLoading && (
+  <div className="flex justify-start mb-4">
+    <div className="flex items-start space-x-3 max-w-[80%]">
+      <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600">
+        <Bot className="w-4 h-4 text-white" />
+      </div>
+      <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <div className="flex items-center space-x-2">
+          <div className="flex space-x-1">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
+          </div>
+          <span className="text-sm text-gray-500">AI is thinking...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
           
           <div ref={chatEndRef} />
         </div>
