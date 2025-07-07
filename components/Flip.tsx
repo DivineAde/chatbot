@@ -1,11 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { marked } from 'marked';
-import { Send, Bot, User, Sparkles, Settings, X, Check, Trash2, Stars, Zap, Shield, Globe, Wand2, Menu, Save, Edit3, Heart, Coffee, } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import { marked } from "marked";
+import {
+  Send,
+  Bot,
+  User,
+  Sparkles,
+  Settings,
+  X,
+  Check,
+  Trash2,
+  Stars,
+  Zap,
+  Shield,
+  Globe,
+  Wand2,
+  Menu,
+  Save,
+  Edit3,
+  Heart,
+  Coffee,
+} from "lucide-react";
 
 interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
@@ -18,23 +37,23 @@ interface OpenRouterResponse {
 }
 
 export default function ChatBot() {
-  const [userInput, setUserInput] = useState('');
-  const [response, setResponse] = useState('');
+  const [userInput, setUserInput] = useState("");
+  const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [showSettings, setShowSettings] = useState(false);
-  const [universalPrompt, setUniversalPrompt] = useState('');
-  const [tempPrompt, setTempPrompt] = useState('');
+  const [universalPrompt, setUniversalPrompt] = useState("");
+  const [tempPrompt, setTempPrompt] = useState("");
   const [promptSaved, setPromptSaved] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load universal prompt from localStorage on component mount
   useEffect(() => {
-    const savedPrompt = localStorage.getItem('universalPrompt');
+    const savedPrompt = localStorage.getItem("universalPrompt");
     if (savedPrompt) {
       setUniversalPrompt(savedPrompt);
       setTempPrompt(savedPrompt);
@@ -44,14 +63,14 @@ export default function ChatBot() {
   // Save universal prompt to localStorage when it changes
   useEffect(() => {
     if (universalPrompt) {
-      localStorage.setItem('universalPrompt', universalPrompt);
+      localStorage.setItem("universalPrompt", universalPrompt);
     } else {
-      localStorage.removeItem('universalPrompt');
+      localStorage.removeItem("universalPrompt");
     }
   }, [universalPrompt]);
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -60,15 +79,21 @@ export default function ChatBot() {
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        120
+      )}px`;
     }
   };
 
   const adjustPromptTextareaHeight = () => {
     if (promptTextareaRef.current) {
-      promptTextareaRef.current.style.height = 'auto';
-      promptTextareaRef.current.style.height = `${Math.min(promptTextareaRef.current.scrollHeight, 200)}px`;
+      promptTextareaRef.current.style.height = "auto";
+      promptTextareaRef.current.style.height = `${Math.min(
+        promptTextareaRef.current.scrollHeight,
+        200
+      )}px`;
     }
   };
 
@@ -88,55 +113,67 @@ export default function ChatBot() {
   };
 
   const sendMessage = async () => {
-  if (!userInput.trim()) return;
+    if (!userInput.trim()) return;
 
-  const currentInput = userInput;
-  setUserInput('');
-  
-  // Add user message to history (original message without prompt)
-  setChatHistory(prev => [...prev, { role: 'user', content: currentInput }]);
-  
-  setIsLoading(true);
-  setResponse('');
+    const currentInput = userInput;
+    setUserInput("");
 
-  try {
-    // Construct the message with universal prompt
-    const promptedMessage = constructPromptedMessage(currentInput);
-    
-    const apiResponse = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: promptedMessage,
-      }),
-    });
+    // Add user message to history (original message without prompt)
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", content: currentInput },
+    ]);
 
-    if (!apiResponse.ok) {
-      throw new Error(`HTTP error! status: ${apiResponse.status}`);
+    setIsLoading(true);
+    setResponse("");
+
+    try {
+      // Construct the message with universal prompt
+      const promptedMessage = constructPromptedMessage(currentInput);
+
+      const apiResponse = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: promptedMessage,
+        }),
+      });
+
+      if (!apiResponse.ok) {
+        throw new Error(`HTTP error! status: ${apiResponse.status}`);
+      }
+
+      const data: OpenRouterResponse = await apiResponse.json();
+      const markdownText =
+        data.choices?.[0]?.message?.content || "No response received.";
+
+      // Convert markdown to HTML (make sure marked.parse returns a string, not a Promise)
+      const htmlContent = await marked.parse(markdownText);
+      setResponse(htmlContent);
+
+      // Add assistant response to history
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: htmlContent },
+      ]);
+    } catch (error) {
+      const errorMessage = `Error: ${
+        error instanceof Error ? error.message : "An unknown error occurred"
+      }`;
+      setResponse(errorMessage);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: errorMessage },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-
-    const data: OpenRouterResponse = await apiResponse.json();
-    const markdownText = data.choices?.[0]?.message?.content || 'No response received.';
-    
-    // Convert markdown to HTML (make sure marked.parse returns a string, not a Promise)
-    const htmlContent = await marked.parse(markdownText);
-    setResponse(htmlContent);
-    
-    // Add assistant response to history
-    setChatHistory(prev => [...prev, { role: 'assistant', content: htmlContent }]);
-  } catch (error) {
-    const errorMessage = `Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`;
-    setResponse(errorMessage);
-    setChatHistory(prev => [...prev, { role: 'assistant', content: errorMessage }]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -144,7 +181,7 @@ export default function ChatBot() {
 
   const clearChat = () => {
     setChatHistory([]);
-    setResponse('');
+    setResponse("");
   };
 
   const savePrompt = () => {
@@ -154,8 +191,8 @@ export default function ChatBot() {
   };
 
   const clearPrompt = () => {
-    setUniversalPrompt('');
-    setTempPrompt('');
+    setUniversalPrompt("");
+    setTempPrompt("");
     setPromptSaved(true);
     setTimeout(() => setPromptSaved(false), 2000);
   };
@@ -213,8 +250,7 @@ export default function ChatBot() {
                 </div>
               </div>
             </div>
-            
-           
+
             <div className="hidden lg:flex items-center space-x-3">
               <button
                 onClick={openSettings}
@@ -232,7 +268,6 @@ export default function ChatBot() {
               </button>
             </div>
 
-            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300 backdrop-blur-sm"
@@ -240,7 +275,6 @@ export default function ChatBot() {
               <Menu className="w-5 h-5" />
             </button>
           </div>
-
 
           {isMobileMenuOpen && (
             <div className="lg:hidden mt-4 p-4 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20">
@@ -270,8 +304,7 @@ export default function ChatBot() {
           )}
         </div>
 
-        
-         {showSettings && (
+        {showSettings && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20">
               <div className="p-6 border-b border-white/20">
@@ -281,8 +314,12 @@ export default function ChatBot() {
                       <Wand2 className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Universal Prompt Settings</h2>
-                      <p className="text-white/70 text-sm">Customize your AI assistant&apos;s behavior</p>
+                      <h2 className="text-xl font-bold text-white">
+                        Universal Prompt Settings
+                      </h2>
+                      <p className="text-white/70 text-sm">
+                        Customize your AI assistant&apos;s behavior
+                      </p>
                     </div>
                   </div>
                   <button
@@ -293,7 +330,7 @@ export default function ChatBot() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
@@ -309,10 +346,10 @@ export default function ChatBot() {
                     value={tempPrompt}
                     onChange={(e) => setTempPrompt(e.target.value)}
                     rows={6}
-                    style={{ minHeight: '120px' }}
+                    style={{ minHeight: "120px" }}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between pt-4">
                   <div className="flex items-center space-x-3">
                     {promptSaved && (
@@ -344,7 +381,6 @@ export default function ChatBot() {
           </div>
         )}
 
-        
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {chatHistory.length === 0 && !response && (
             <div className="text-center py-12">
@@ -355,7 +391,8 @@ export default function ChatBot() {
                 Welcome to AI ChatBot
               </h3>
               <p className="text-white max-w-md mx-auto mb-4">
-                Start a conversation by typing your message below. I&apos;m here to help with questions, creative tasks, and more!
+                Start a conversation by typing your message below. I&apos;m here
+                to help with questions, creative tasks, and more!
               </p>
               {universalPrompt && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 max-w-md mx-auto">
@@ -373,71 +410,82 @@ export default function ChatBot() {
           {chatHistory.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-6`}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              } mb-6`}
             >
-              <div className={`flex items-start space-x-3 lg:space-x-4 max-w-[85%] lg:max-w-[75%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                <div className={`relative p-3 rounded-2xl shadow-lg ${
-                  message.role === 'user' 
-                    ? 'bg-gradient-to-r from-purple-500 to-blue-500' 
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                }`}>
-                  {message.role === 'user' ? 
-                    <User className="w-5 h-5 text-white" /> : 
+              <div
+                className={`flex items-start space-x-3 lg:space-x-4 max-w-[85%] lg:max-w-[75%] ${
+                  message.role === "user"
+                    ? "flex-row-reverse space-x-reverse"
+                    : ""
+                }`}
+              >
+                <div
+                  className={`relative p-3 rounded-2xl shadow-lg ${
+                    message.role === "user"
+                      ? "bg-gradient-to-r from-purple-500 to-blue-500"
+                      : "bg-gradient-to-r from-emerald-500 to-teal-500"
+                  }`}
+                >
+                  {message.role === "user" ? (
+                    <User className="w-5 h-5 text-white" />
+                  ) : (
                     <Bot className="w-5 h-5 text-white" />
-                  }
+                  )}
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white/30 rounded-full animate-pulse"></div>
                 </div>
-                <div className={`px-4 lg:px-6 py-3 lg:py-4 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${
-                  message.role === 'user' 
-                    ? 'bg-gradient-to-r from-purple-500/90 to-blue-500/90 text-white' 
-                    : 'bg-white/10 border border-white/20 text-white'
-                }`}>
+                <div
+                  className={`px-4 lg:px-6 py-3 lg:py-4 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${
+                    message.role === "user"
+                      ? "bg-gradient-to-r from-purple-500/90 to-blue-500/90 text-white"
+                      : "bg-white/10 border border-white/20 text-white"
+                  }`}
+                >
                   <div className="flex items-center space-x-2 mb-2">
-                    {message.role === 'user' ? (
-                      <span className="text-xs font-medium opacity-80">You</span>
+                    {message.role === "user" ? (
+                      <div>
+                        <span className="text-xs font-medium opacity-80">
+                          You
+                        </span>
+                        <p className="mt-1 text-sm text-white">
+                          {message.content}
+                        </p>
+                      </div>
                     ) : (
-                    <div 
-                      className="prose prose-sm max-w-none
-                        [&>h3]:text-gray-700 [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:mt-0
-                        [&>strong]:text-emerald-600
-                        [&>ul]:pl-5 [&>ul]:list-disc [&>ul]:my-2
-                        [&>li]:mb-1
-                        [&>ol]:pl-5 [&>ol]:list-decimal [&>ol]:my-2
-                        [&>p]:mb-2 [&>p]:last:mb-0
-                        [&>blockquote]:border-l-4 [&>blockquote]:border-emerald-300 [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:text-gray-600
-                        [&>code]:bg-gray-100 [&>code]:px-2 [&>code]:py-1 [&>code]:rounded [&>code]:text-sm [&>code]:font-mono
-                        [&>pre]:bg-gray-900 [&>pre]:text-gray-100 [&>pre]:p-4 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>pre]:my-3
-                        [&>pre>code]:bg-transparent [&>pre>code]:p-0"
-                      dangerouslySetInnerHTML={{ __html: message.content }}
-                    />
-                  )}
+                      <div
+                        className="prose prose-sm max-w-none ..."
+                        dangerouslySetInnerHTML={{ __html: message.content }}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
-             </div>
             </div>
           ))}
 
-          
-         {isLoading && (
-  <div className="flex justify-start mb-4">
-    <div className="flex items-start space-x-3 max-w-[80%]">
-      <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600">
-        <Bot className="w-4 h-4 text-white" />
-      </div>
-      <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm">
-        <div className="flex items-center space-x-2">
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
-          </div>
-          <span className="text-sm text-gray-500">AI is thinking...</span>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-          
+          {isLoading && (
+            <div className="flex justify-start mb-4">
+              <div className="flex items-start space-x-3 max-w-[80%]">
+                <div className="p-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-200"></div>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      AI is thinking...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={chatEndRef} />
         </div>
 
@@ -454,7 +502,7 @@ export default function ChatBot() {
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
                 rows={1}
-                style={{ minHeight: '56px' }}
+                style={{ minHeight: "56px" }}
               />
               <div className="absolute bottom-2 right-2 flex items-center space-x-2 text-white/40">
                 <Coffee className="w-3 h-3" />
@@ -476,7 +524,7 @@ export default function ChatBot() {
               <div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
             </button>
           </div>
-          
+
           <div className="flex items-center justify-center mt-4 space-x-4 text-white/40 text-xs">
             <div className="flex items-center space-x-1">
               <Shield className="w-3 h-3" />
