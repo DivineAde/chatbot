@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // 3. Prepare Payload
     // ==============================
     const payload = {
-      model: 'deepseek/deepseek-r1:free',
+      model: 'deepseek/deepseek-r1',
       messages: [
         {
           role: 'system',
